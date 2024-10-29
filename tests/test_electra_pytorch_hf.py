@@ -3,19 +3,17 @@ sys.path.append('..')
 
 from electra_pytorch.electra_pytorch_hf import ElectraHuggingFace, Trainer # type: ignore
 
-from datasets import load_from_disk
+import torch
+from datasets import load_from_disk, load_dataset
 from transformers import AutoModelForMaskedLM, AutoModelForTokenClassification, AutoTokenizer, DataCollatorForLanguageModeling, TrainingArguments
-from transformers import AutoConfig, ElectraForMaskedLM, ElectraForPreTraining
+
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 generator_model_name = "microsoft/deberta-v3-small"
 discriminator_model_name = generator_model_name
 
-# generator = ElectraForMaskedLM(AutoConfig.from_pretrained(generator_model_name))
-# discriminator = ElectraForPreTraining(AutoConfig.from_pretrained(discriminator_model_name))
-
-
-generator = AutoModelForMaskedLM.from_pretrained(generator_model_name)
-discriminator = AutoModelForTokenClassification.from_pretrained(discriminator_model_name, num_labels=1)
+generator = AutoModelForMaskedLM.from_pretrained(generator_model_name).to(device)
+discriminator = AutoModelForTokenClassification.from_pretrained(discriminator_model_name, num_labels=1).to(device)
 
 generator_tokenizer = AutoTokenizer.from_pretrained(generator_model_name)
 
@@ -24,15 +22,23 @@ electra_model = ElectraHuggingFace(
     generator,
     generator_tokenizer,
     discriminator,
+    device = device
 )
 
-tokenized_dataset = load_from_disk("./datsets_txt/test_ds/BIO-Plain-text-tokenized-100-samples").select(range(10))
-tokenized_dataset.shuffle(seed=42) 
+dataset = load_dataset("text", data_files={"train": "./datsets_txt/random_100_samples.txt"})
+dataset = dataset['train'].shuffle(seed=42) 
 
-data_collator = DataCollatorForLanguageModeling(tokenizer=generator_tokenizer, mlm_probability=0.15)
+def tokenize_function(examples):
+    tokens = generator_tokenizer(examples["text"], truncation=True, padding=True, max_length= 512)
+    tokens["labels"] = tokens["input_ids"].copy()
+    return tokens
+
+tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=["text"])
+
+data_collator = DataCollatorForLanguageModeling(tokenizer=generator_tokenizer, mlm_probability=0.15, pad_to_multiple_of=8)
 
 num_examples = len(tokenized_dataset)
-batch_size = 1
+batch_size = 7
 num_train_epochs = 1
 
 # Calculate total steps

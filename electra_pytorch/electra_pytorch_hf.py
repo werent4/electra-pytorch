@@ -48,6 +48,7 @@ class ElectraHuggingFace(nn.Module):
         generator_tokenizer: Union[PreTrainedTokenizer, PreTrainedTokenizerBase, PreTrainedTokenizerFast], 
         discriminator: PreTrainedModel,
         *,
+        device: torch.device = torch.device('cpu'),
         mask_ignore_token_ids = [],
         disc_weight = 50., 
         gen_weight = 1., 
@@ -55,8 +56,9 @@ class ElectraHuggingFace(nn.Module):
         ):
         super().__init__()
 
-        self.generator = generator
-        self.discriminator = discriminator
+        self.generator = generator.to(device)
+        self.discriminator = discriminator.to(device)
+        self.device = device
 
         if self.generator.config.vocab_size != self.discriminator.config.vocab_size:
             raise ValueError("generator and discriminator models have different vocab size") 
@@ -76,11 +78,18 @@ class ElectraHuggingFace(nn.Module):
         self.gen_weight = gen_weight 
 
     def forward(self, input= None, input_ids=None, attention_mask=None, labels=None,**kwargs):
+        if input_ids is None or attention_mask is None or labels is None:
+            raise ValueError("`input_ids`, `attention_mask`, and `labels` cannot be None.")
+        
         # Extract inputs from the batch
         if input is not None:
-            input_ids = input["input_ids"]
-            attention_mask = input.get("attention_mask", None)
-            labels = input.get("labels", None)
+            input_ids = input["input_ids"].to(self.device)
+            attention_mask = input.get("attention_mask", None).to(self.device) 
+            labels = input.get("labels", None).to(self.device)
+
+        input_ids = input_ids.to(self.device) 
+        attention_mask = attention_mask.to(self.device) 
+        labels = labels.to(self.device) 
 
         logits = self.generator(input_ids=input_ids, attention_mask=attention_mask, **kwargs).logits # Generator logits
 
