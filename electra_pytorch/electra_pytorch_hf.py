@@ -112,7 +112,7 @@ class ElectraHuggingFace(nn.Module):
     @classmethod
     def from_pretrained(cls, output_dir, mask_ignore_token_ids=[], disc_weight=50., gen_weight=1., temperature=1.):
         """
-        Кастомный метод `from_pretrained`, который загружает генератор, дискриминатор и токенизатор из директории.
+        Custom method `from_pretrained` which loads the generator, discriminator and tokenizer from a directory.
         """
         # Loading the generator and discriminator from the corresponding paths
         generator = AutoModelForMaskedLM.from_pretrained(os.path.join(output_dir, "generator"))
