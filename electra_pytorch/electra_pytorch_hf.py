@@ -1,7 +1,6 @@
 import math
 from functools import reduce
 from collections import namedtuple
-#git commit -m "updated: model output | weights tied"
 import torch, logging, os
 from torch import nn
 import torch.nn.functional as F
