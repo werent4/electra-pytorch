@@ -31,6 +31,7 @@ dataset = dataset['train'].shuffle(seed=42)
 def tokenize_function(examples):
     tokens = generator_tokenizer(examples["text"], truncation=True, padding=True, max_length= 512)
     tokens["labels"] = tokens["input_ids"].copy()
+    tokens["original_input_ids"] = tokens["input_ids"].copy()
     return tokens
 
 tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=["text"])

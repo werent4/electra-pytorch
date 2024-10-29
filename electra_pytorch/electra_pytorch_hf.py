@@ -32,8 +32,6 @@ class Trainer(Trainer):
         self.model.generator.save_pretrained(generator_save_path)
         self.model.discriminator.save_pretrained(discriminator_save_path)
 
-        print(f"Custom model saved in {output_dir}")
-
 @dataclass
 class ElectraOutput(ModelOutput):
 
@@ -77,7 +75,7 @@ class ElectraHuggingFace(nn.Module):
         self.disc_weight = disc_weight 
         self.gen_weight = gen_weight 
 
-    def forward(self, input= None, input_ids=None, attention_mask=None, labels=None,**kwargs):
+    def forward(self, input= None, input_ids=None, attention_mask=None, labels=None, original_input_ids=None, **kwargs):
         if input_ids is None or attention_mask is None or labels is None:
             raise ValueError("`input_ids`, `attention_mask`, and `labels` cannot be None.")
         
@@ -86,8 +84,10 @@ class ElectraHuggingFace(nn.Module):
             input_ids = input["input_ids"].to(self.device)
             attention_mask = input.get("attention_mask", None).to(self.device) 
             labels = input.get("labels", None).to(self.device)
+            original_input_ids = input.get("original_input_ids", None).to(self.device)
 
         input_ids = input_ids.to(self.device) 
+        original_input_ids = original_input_ids.to(self.device) 
         attention_mask = attention_mask.to(self.device) 
         labels = labels.to(self.device) 
 
@@ -98,9 +98,6 @@ class ElectraHuggingFace(nn.Module):
             labels,
             ignore_index = -100
         )
-
-        # save original `input_ids` before they change
-        original_input_ids = input_ids.clone()
 
         # Sample generator predictions for discriminator input
         with torch.no_grad():
