@@ -229,3 +229,4 @@ class Electra(nn.Module):
 
         # return weighted sum of losses
         return Results(self.gen_weight * mlm_loss + self.disc_weight * disc_loss, mlm_loss, disc_loss, gen_acc, disc_acc, disc_labels, disc_predictions)
+

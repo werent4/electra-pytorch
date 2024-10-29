@@ -1,1 +1,2 @@
 from electra_pytorch.electra_pytorch import Electra
+from electra_pytorch.electra_pytorch_hf import ElectraHuggingFace
