@@ -1,15 +1,18 @@
 import sys
-sys.path.append('../BioLMs')
-sys.path.append('/home/werent4/BioLMs/electra-pytorch')
+sys.path.append('..')
 
 from electra_pytorch.electra_pytorch_hf import ElectraHuggingFace, Trainer # type: ignore
 
 from datasets import load_from_disk
 from transformers import AutoModelForMaskedLM, AutoModelForTokenClassification, AutoTokenizer, DataCollatorForLanguageModeling, TrainingArguments
-
+from transformers import AutoConfig, ElectraForMaskedLM, ElectraForPreTraining
 
 generator_model_name = "microsoft/deberta-v3-small"
 discriminator_model_name = generator_model_name
+
+# generator = ElectraForMaskedLM(AutoConfig.from_pretrained(generator_model_name))
+# discriminator = ElectraForPreTraining(AutoConfig.from_pretrained(discriminator_model_name))
+
 
 generator = AutoModelForMaskedLM.from_pretrained(generator_model_name)
 discriminator = AutoModelForTokenClassification.from_pretrained(discriminator_model_name, num_labels=1)
@@ -23,7 +26,7 @@ electra_model = ElectraHuggingFace(
     discriminator,
 )
 
-tokenized_dataset = load_from_disk("../datsets_txt/test_ds/BIO-Plain-text-tokenized-100-samples").select(range(10))
+tokenized_dataset = load_from_disk("./datsets_txt/test_ds/BIO-Plain-text-tokenized-100-samples").select(range(10))
 tokenized_dataset.shuffle(seed=42) 
 
 data_collator = DataCollatorForLanguageModeling(tokenizer=generator_tokenizer, mlm_probability=0.15)
@@ -37,7 +40,7 @@ total_steps = (num_examples // batch_size) * num_train_epochs
 
 print("tokenized_dataset") 
 print(tokenized_dataset) 
-output_dir="../test_electra"
+output_dir="./test_electra"
 
 training_args = TrainingArguments(
     output_dir=output_dir,
